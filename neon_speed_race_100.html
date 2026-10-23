@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON SPEED RACE 100</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Orbitron & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Orbitron', 'sans-serif'],
+                    },
+                    colors: {
+                        neon: {
+                            cyan: '#00f3ff',
+                            magenta: '#ff007f',
+                            yellow: '#facc15',
+                            purple: '#a855f7',
+                            dark: '#070a13',
+                            panel: '#0d1322'
+                        }
+                    },
+                    boxShadow: {
+                        'neon-cyan': '0 0 20px rgba(0, 243, 255, 0.4)',
+                        'neon-magenta': '0 0 20px rgba(255, 0, 127, 0.4)',
+                        'neon-yellow': '0 0 20px rgba(250, 204, 21, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050811;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 243, 255, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(255, 0, 127, 0.08) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+        }
+
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(13, 19, 34, 0.8);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 243, 255, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 243, 255, 0.6);
+        }
+
+        /* Number input spinner hide */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="text-slate-100 font-sans min-h-screen flex flex-col justify-between items-center p-3 sm:p-6 selection:bg-neon-cyan selection:text-black">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+    <!-- Application Top Navigation Header -->
+    <header class="w-full max-w-5xl z-10 flex flex-col sm:flex-row justify-between items-center gap-4 bg-neon-panel/80 backdrop-blur-xl border border-slate-800 p-4 rounded-2xl shadow-2xl">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-500 via-fuchsia-500 to-amber-400 p-0.5 shadow-neon-cyan flex items-center justify-center">
+                <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                    <i class="fa-solid fa-gauge-high text-neon-cyan text-xl"></i>
+                </div>
+            </div>
+            <div>
+                <h1 class="font-display font-black text-xl sm:text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan via-white to-neon-magenta uppercase">
+                    Neon Speed Race 100
+                </h1>
+                <p class="text-xs text-slate-400 font-medium">Cyberpunk 1–100 Number Race Duel</p>
+            </div>
+        </div>
+
+        <!-- Global Header Controls -->
+        <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+            <!-- Racer Handle Display & Quick Edit Button -->
+            <button onclick="window.openOnlinePlayersModal()" class="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-neon-cyan text-slate-300 hover:text-white transition cursor-pointer flex items-center gap-2 text-xs font-mono shadow-sm">
+                <i class="fa-solid fa-id-badge text-neon-cyan"></i>
+                <span id="headerRacerName" class="font-bold text-white truncate max-w-[100px]">Racer Tag</span>
+            </button>
+
+            <!-- Online Players Counter Badge -->
+            <button id="onlineBadgeBtn" onclick="window.openOnlinePlayersModal()" class="px-3 py-1.5 rounded-xl bg-slate-950 border border-emerald-500/40 hover:border-emerald-400 text-emerald-400 hover:text-emerald-300 transition cursor-pointer flex items-center gap-2 text-xs font-mono font-bold shadow-neon-cyan">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="onlineCountText">1 Online</span>
+            </button>
+
+            <!-- User Stats Summary -->
+            <div class="bg-slate-950/70 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-3 text-xs font-mono">
+                <div><span class="text-slate-500">W:</span> <span id="statWins" class="text-neon-cyan font-bold">0</span></div>
+                <div class="w-px h-3 bg-slate-800"></div>
+                <div><span class="text-slate-500">L:</span> <span id="statLosses" class="text-neon-magenta font-bold">0</span></div>
+            </div>
+
+            <!-- Sound Mute Toggle -->
+            <button id="soundToggleBtn" onclick="window.toggleSound()" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white transition cursor-pointer flex items-center gap-2 text-xs font-semibold">
+                <i id="soundIcon" class="fa-solid fa-volume-high text-neon-cyan"></i>
+                <span id="soundLabel" class="hidden md:inline">SFX On</span>
+            </button>
+
+            <!-- Mode Switch / Return Lobby -->
+            <button id="returnLobbyBtn" onclick="window.showLobby()" class="hidden px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs font-bold text-slate-200 transition cursor-pointer flex items-center gap-1.5">
+                <i class="fa-solid fa-house text-neon-yellow"></i> Lobby
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Workspace Screen -->
+    <main class="w-full max-w-5xl z-10 my-4 flex-1 flex flex-col justify-center">
+
+        <!-- ================= 1. LOBBY / MODE SELECTION ================= -->
+        <section id="lobbyScreen" class="w-full space-y-6">
+            <div class="text-center space-y-2 py-4">
+                <h2 class="font-display text-2xl sm:text-4xl font-extrabold text-white tracking-wide uppercase">
+                    Select Race Protocol
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                    Out-think and out-speed your rival. Guess your secret number (1–100) using range hints before your opponent does!
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- SINGLE PLAYER CARD (VS BOT) -->
+                <div class="bg-neon-panel/90 border border-cyan-500/30 hover:border-neon-cyan rounded-3xl p-6 space-y-6 shadow-2xl transition duration-300 flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="w-12 h-12 rounded-2xl bg-cyan-950 border border-cyan-500/40 text-neon-cyan flex items-center justify-center text-xl shadow-neon-cyan">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <span class="text-[10px] font-mono font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-neon-cyan">
+                                Offline Single-Player
+                            </span>
+                        </div>
+                        <div>
+                            <h3 class="font-display text-xl font-black text-white group-hover:text-neon-cyan transition">VS Neural Bot</h3>
+                            <p class="text-xs text-slate-400 mt-1">Race against AI algorithms with varying binary search speed & tactical accuracy.</p>
+                        </div>
+
+                        <!-- Bot Difficulty Selector -->
+                        <div class="space-y-2 pt-2">
+                            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Select AI Difficulty:</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="window.setBotDifficulty('rookie')" id="botBtn-rookie" class="bot-diff-btn py-2 px-3 rounded-xl border text-xs font-bold transition text-left flex flex-col gap-0.5 bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700">
+                                    <span class="text-slate-200">Rookie</span>
+                                    <span class="text-[10px] text-slate-500 font-normal">Random (~2.5s)</span>
+                                </button>
+                                <button onclick="window.setBotDifficulty('tactician')" id="botBtn-tactician" class="bot-diff-btn py-2 px-3 rounded-xl border text-xs font-bold transition text-left flex flex-col gap-0.5 bg-cyan-950/60 border-neon-cyan/50 text-neon-cyan shadow-neon-cyan">
+                                    <span class="text-white">Tactician</span>
+                                    <span class="text-[10px] text-cyan-300/80 font-normal">Smart (~1.5s)</span>
+                                </button>
+                                <button onclick="window.setBotDifficulty('demon')" id="botBtn-demon" class="bot-diff-btn py-2 px-3 rounded-xl border text-xs font-bold transition text-left flex flex-col gap-0.5 bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700">
+                                    <span class="text-amber-400">Speed Demon</span>
+                                    <span class="text-[10px] text-slate-500 font-normal">Binary (~0.9s)</span>
+                                </button>
+                                <button onclick="window.setBotDifficulty('god')" id="botBtn-god" class="bot-diff-btn py-2 px-3 rounded-xl border text-xs font-bold transition text-left flex flex-col gap-0.5 bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700">
+                                    <span class="text-neon-magenta">Cyber God</span>
+                                    <span class="text-[10px] text-slate-500 font-normal">Optimal (~0.5s)</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="window.startBotRace()" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-display font-black text-sm uppercase tracking-wider shadow-neon-cyan active:scale-95 transition cursor-pointer flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> Launch Bot Match
+                    </button>
+                </div>
+
+                <!-- ONLINE MULTIPLAYER CARD -->
+                <div class="bg-neon-panel/90 border border-fuchsia-500/30 hover:border-neon-magenta rounded-3xl p-6 space-y-6 shadow-2xl transition duration-300 flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="w-12 h-12 rounded-2xl bg-fuchsia-950 border border-fuchsia-500/40 text-neon-magenta flex items-center justify-center text-xl shadow-neon-magenta">
+                                <i class="fa-solid fa-globe"></i>
+                            </div>
+                            <span class="text-[10px] font-mono font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-fuchsia-950/80 border border-fuchsia-500/40 text-neon-magenta">
+                                Online Realtime
+                            </span>
+                        </div>
+                        <div>
+                            <h3 class="font-display text-xl font-black text-white group-hover:text-neon-magenta transition">Online Multiplayer</h3>
+                            <p class="text-xs text-slate-400 mt-1">Race live against remote friends via Room Codes or enter Quick Match queue.</p>
+                        </div>
+
+                        <!-- Multiplayer Sub-Actions -->
+                        <div class="space-y-3 pt-2">
+                            <button onclick="window.handleMultiplayerClick('quick')" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-fuchsia-500/40 text-fuchsia-300 hover:text-white font-bold text-xs transition flex items-center justify-between cursor-pointer">
+                                <span class="flex items-center gap-2"><i class="fa-solid fa-bolt text-neon-magenta"></i> Quick Match Queue</span>
+                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            </button>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="window.handleMultiplayerClick('create')" class="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 transition cursor-pointer flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-plus text-neon-cyan"></i> Create Room
+                                </button>
+                                <button onclick="window.handleMultiplayerClick('join')" class="py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 transition cursor-pointer flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-key text-neon-yellow"></i> Join Code
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center text-[11px] text-slate-500 font-mono">
+                        Powered by Firebase Firestore Realtime Sync
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= 2. ONLINE WAITING / LOBBY ROOM ================= -->
+        <section id="roomScreen" class="hidden w-full max-w-xl mx-auto bg-neon-panel/90 border border-slate-800 backdrop-blur-xl rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl">
+            <div class="text-center space-y-2">
+                <span class="text-xs font-mono font-bold uppercase tracking-widest text-fuchsia-400">Matchroom Created</span>
+                <h2 class="font-display text-2xl font-black text-white">ROOM CODE: <span id="roomCodeDisplay" class="text-neon-magenta font-mono tracking-widest">------</span></h2>
+                <p class="text-xs text-slate-400">Share this code with a friend to duel live!</p>
+            </div>
+
+            <!-- Code Copy Bar -->
+            <div class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-2xl border border-slate-800">
+                <input type="text" id="roomShareUrl" readonly class="bg-transparent text-xs text-slate-400 font-mono flex-1 px-2 focus:outline-none truncate">
+                <button onclick="window.copyRoomCode()" class="px-4 py-2 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-bold text-xs transition cursor-pointer flex items-center gap-1.5">
+                    <i class="fa-solid fa-copy"></i> Copy Code
+                </button>
+            </div>
+
+            <!-- Players Status Slot -->
+            <div class="grid grid-cols-2 gap-4 pt-2">
+                <!-- Host (P1) -->
+                <div class="bg-slate-950/80 border border-cyan-500/40 rounded-2xl p-4 text-center space-y-2">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-950 text-neon-cyan border border-cyan-500/40 flex items-center justify-center mx-auto text-lg">
+                        <i class="fa-solid fa-user-ninja"></i>
+                    </div>
+                    <div id="roomP1Name" class="font-bold text-sm text-cyan-300 truncate">Host (Player 1)</div>
+                    <div class="text-[10px] uppercase font-mono font-bold text-emerald-400">Connected</div>
+                </div>
+
+                <!-- Guest (P2) -->
+                <div id="roomP2Slot" class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-center space-y-2">
+                    <div id="roomP2Icon" class="w-10 h-10 rounded-xl bg-slate-900 text-slate-600 border border-slate-800 flex items-center justify-center mx-auto text-lg">
+                        <i class="fa-solid fa-user-astronaut"></i>
+                    </div>
+                    <div id="roomP2Name" class="font-bold text-sm text-slate-500 truncate">Waiting for opponent...</div>
+                    <div id="roomP2Status" class="text-[10px] uppercase font-mono font-bold text-slate-500 animate-pulse">Scanning</div>
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="space-y-3 pt-2">
+                <button id="hostStartBtn" onclick="window.triggerOnlineCountdown()" disabled class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-white font-display font-black text-sm uppercase tracking-wider opacity-50 cursor-not-allowed transition shadow-neon-magenta flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bolt"></i> Start Online Race
+                </button>
+                <button onclick="window.leaveRoom()" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 font-bold text-xs transition cursor-pointer">
+                    Leave Matchroom
+                </button>
+            </div>
+        </section>
+
+
+        <!-- ================= 3. ACTIVE SPEED RACE GAME CANVAS ================= -->
+        <section id="gameScreen" class="hidden w-full space-y-4">
+
+            <!-- Match Banner & Timer Bar -->
+            <div class="bg-neon-panel/90 border border-slate-800 backdrop-blur-xl rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row justify-between items-center gap-3 shadow-2xl">
+                <div class="flex items-center gap-3">
+                    <span id="matchModeBadge" class="text-[10px] font-mono font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-cyan-950 border border-cyan-500/40 text-neon-cyan">
+                        VS Bot: Tactician
+                    </span>
+                    <span id="matchStatusText" class="text-xs text-slate-400 font-medium">Race active! Target: 1 - 100</span>
+                </div>
+
+                <!-- Clock Timer display -->
+                <div class="bg-slate-950 border border-slate-800 px-4 py-1.5 rounded-xl font-mono text-xl sm:text-2xl font-black text-neon-yellow shadow-inner">
+                    <i class="fa-solid fa-stopwatch text-sm text-slate-500 mr-2"></i><span id="activeRaceTimer">00:00.00</span>
+                </div>
+            </div>
+
+            <!-- Race Countdown Overlay -->
+            <div id="gameCountdownOverlay" class="hidden bg-slate-900/90 border border-neon-cyan/50 backdrop-blur-md rounded-3xl p-8 text-center space-y-3 shadow-neon-cyan my-4">
+                <div class="text-xs font-mono font-bold text-neon-cyan uppercase tracking-widest">GET READY TO RACE</div>
+                <div id="gameCountdownNum" class="font-display text-7xl font-black text-white animate-bounce">3</div>
+                <p class="text-xs text-slate-400">Lock onto your secret target!</p>
+            </div>
+
+            <!-- Split-Screen Duel Stage -->
+            <div id="raceDuelGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <!-- PLAYER 1 (YOU - CYAN) -->
+                <div class="bg-neon-panel/90 border border-cyan-500/40 backdrop-blur-xl rounded-3xl p-5 space-y-4 shadow-neon-cyan relative overflow-hidden flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <!-- Player Header -->
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-neon-cyan inline-block shadow-neon-cyan"></span>
+                                <span id="p1RaceName" class="font-display font-bold text-neon-cyan text-sm sm:text-base">YOU (P1)</span>
+                            </div>
+                            <div class="text-xs font-mono text-slate-400">
+                                Guesses: <span id="p1TriesCount" class="text-white font-bold">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Range Visualizer Track -->
+                        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80 space-y-1.5">
+                            <div class="flex justify-between text-xs font-mono font-bold">
+                                <span class="text-slate-400">Active Bounds</span>
+                                <span id="p1RangeText" class="text-neon-cyan">1 – 100</span>
+                            </div>
+                            <div class="relative w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="p1RangeBar" class="absolute h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-300" style="left: 0%; width: 100%;"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+                                <span>1</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+
+                        <!-- Guess Input Form with Quick Modifiers -->
+                        <div class="space-y-2">
+                            <form onsubmit="event.preventDefault(); window.submitPlayerGuess();" class="space-y-2">
+                                <div class="relative">
+                                    <input 
+                                        type="number" 
+                                        id="p1GuessInput" 
+                                        min="1" 
+                                        max="100" 
+                                        placeholder="Enter (1-100)..." 
+                                        disabled 
+                                        class="w-full bg-slate-950 border border-slate-700 focus:border-neon-cyan text-white text-center text-2xl font-mono font-black py-3 px-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition disabled:opacity-50"
+                                    >
+                                </div>
+
+                                <!-- Quick Adjustment Tap Buttons -->
+                                <div class="grid grid-cols-4 gap-1.5">
+                                    <button type="button" onclick="window.adjustInput(-10)" class="py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-mono text-slate-300 rounded-xl transition">-10</button>
+                                    <button type="button" onclick="window.adjustInput(-1)" class="py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-mono text-slate-300 rounded-xl transition">-1</button>
+                                    <button type="button" onclick="window.adjustInput(1)" class="py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-mono text-slate-300 rounded-xl transition">+1</button>
+                                    <button type="button" onclick="window.adjustInput(10)" class="py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-mono text-slate-300 rounded-xl transition">+10</button>
+                                </div>
+
+                                <button type="submit" id="p1SubmitBtn" disabled class="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-display font-black text-sm uppercase tracking-wider rounded-2xl transition shadow-neon-cyan active:scale-98 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-paper-plane"></i> Submit Guess
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- P1 Live Feedback Box -->
+                        <div id="p1FeedbackBox" class="p-3 rounded-2xl border bg-slate-950 border-slate-800 text-slate-400 font-semibold text-xs text-center min-h-[42px] flex items-center justify-center">
+                            Waiting for countdown...
+                        </div>
+                    </div>
+
+                    <!-- P1 Mini Log -->
+                    <div class="space-y-1.5 pt-3 border-t border-slate-800">
+                        <div class="text-[11px] font-mono text-slate-500 font-bold">Your Guess Log</div>
+                        <div id="p1HistoryList" class="max-h-28 overflow-y-auto space-y-1 text-xs">
+                            <div class="text-slate-600 text-[11px] text-center italic py-2">No guesses submitted.</div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- PLAYER 2 / OPPONENT (MAGENTA / BOT) -->
+                <div class="bg-neon-panel/90 border border-fuchsia-500/40 backdrop-blur-xl rounded-3xl p-5 space-y-4 shadow-neon-magenta relative overflow-hidden flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <!-- Opponent Header -->
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-neon-magenta inline-block shadow-neon-magenta"></span>
+                                <span id="p2RaceName" class="font-display font-bold text-neon-magenta text-sm sm:text-base">OPPONENT</span>
+                            </div>
+                            <div class="text-xs font-mono text-slate-400">
+                                Guesses: <span id="p2TriesCount" class="text-white font-bold">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Opponent Range Visualizer Track -->
+                        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80 space-y-1.5">
+                            <div class="flex justify-between text-xs font-mono font-bold">
+                                <span class="text-slate-400">Rival Bounds</span>
+                                <span id="p2RangeText" class="text-neon-magenta">1 – 100</span>
+                            </div>
+                            <div class="relative w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="p2RangeBar" class="absolute h-full bg-gradient-to-r from-fuchsia-500 to-rose-500 rounded-full transition-all duration-300" style="left: 0%; width: 100%;"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+                                <span>1</span>
+                                <span>100</span>
+                            </div>
+                        </div>
+
+                        <!-- Opponent Live Status Card -->
+                        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 text-center space-y-2 min-h-[140px] flex flex-col justify-center items-center">
+                            <div id="p2StatusPulse" class="w-10 h-10 rounded-full bg-fuchsia-950 border border-fuchsia-500/40 text-neon-magenta flex items-center justify-center text-lg animate-pulse">
+                                <i class="fa-solid fa-brain"></i>
+                            </div>
+                            <div id="p2StatusMain" class="font-bold text-sm text-slate-200">Analyzing Range...</div>
+                            <div id="p2StatusSub" class="text-xs text-slate-500 font-mono">Opponent computing optimal guess</div>
+                        </div>
+
+                        <!-- Opponent Feedback Box -->
+                        <div id="p2FeedbackBox" class="p-3 rounded-2xl border bg-slate-950 border-slate-800 text-slate-400 font-semibold text-xs text-center min-h-[42px] flex items-center justify-center">
+                            Waiting for countdown...
+                        </div>
+                    </div>
+
+                    <!-- Opponent Mini Log -->
+                    <div class="space-y-1.5 pt-3 border-t border-slate-800">
+                        <div class="text-[11px] font-mono text-slate-500 font-bold">Rival Guess Log</div>
+                        <div id="p2HistoryList" class="max-h-28 overflow-y-auto space-y-1 text-xs">
+                            <div class="text-slate-600 text-[11px] text-center italic py-2">No rival guesses yet.</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Mandatory Racer Handle Prompt Modal -->
+    <div id="namePromptModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-neon-panel border border-fuchsia-500/50 rounded-3xl p-6 sm:p-8 w-full max-w-md space-y-5 shadow-neon-magenta">
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-fuchsia-950 border border-fuchsia-500/50 text-neon-magenta flex items-center justify-center mx-auto text-2xl shadow-neon-magenta">
+                    <i class="fa-solid fa-user-astronaut"></i>
+                </div>
+                <h3 class="font-display text-xl font-black text-white uppercase tracking-wider">
+                    Racer Handle Required
+                </h3>
+                <p class="text-xs text-slate-400">
+                    Set a unique Racer Tag to compete in live multiplayer races & show up on active player feeds.
+                </p>
+            </div>
+
+            <form onsubmit="event.preventDefault(); window.submitMandatoryName();" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-mono font-bold text-fuchsia-400 uppercase tracking-wider mb-2">Choose Handle / Tag:</label>
+                    <input 
+                        type="text" 
+                        id="mandatoryNameInput" 
+                        maxlength="15" 
+                        placeholder="e.g. CyberSpeed_99" 
+                        required 
+                        class="w-full bg-slate-950 border border-slate-700 focus:border-neon-magenta text-white text-center font-mono font-bold text-lg py-3 px-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-fuchsia-500/40 transition"
+                    >
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-display font-black text-sm uppercase tracking-wider rounded-2xl transition shadow-neon-magenta active:scale-95 cursor-pointer flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check-double"></i> Save & Enter Match
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Join Room Code Modal -->
+    <div id="joinModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-neon-panel border border-slate-800 rounded-3xl p-6 w-full max-w-md space-y-5 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-display font-bold text-white text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-key text-neon-yellow"></i> Enter Room Code
+                </h3>
+                <button onclick="window.closeJoinRoomModal()" class="text-slate-400 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form onsubmit="event.preventDefault(); window.submitJoinCode();" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-mono font-bold text-slate-400 uppercase tracking-wider mb-2">6-Character Room Key:</label>
+                    <input 
+                        type="text" 
+                        id="joinCodeInput" 
+                        maxlength="6" 
+                        placeholder="e.g. X9K2P4" 
+                        required 
+                        class="w-full bg-slate-950 border border-slate-700 focus:border-neon-yellow text-white text-center font-mono font-black text-2xl py-3 px-4 rounded-2xl uppercase tracking-widest focus:outline-none"
+                    >
+                </div>
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-display font-black text-sm uppercase tracking-wider rounded-2xl transition shadow-neon-yellow cursor-pointer">
+                    Connect To Match
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Victory / Defeat Game Summary Modal -->
+    <div id="victoryModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-neon-panel border border-slate-800 rounded-3xl p-6 sm:p-8 w-full max-w-md space-y-6 shadow-2xl text-center">
+            <div id="victoryIconBox" class="w-20 h-20 rounded-3xl bg-cyan-950 border border-neon-cyan/50 text-neon-cyan flex items-center justify-center mx-auto text-4xl shadow-neon-cyan animate-bounce">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            
+            <div class="space-y-1">
+                <h3 id="victoryTitle" class="font-display text-2xl font-black text-white uppercase tracking-wider">
+                    VICTORY ACHIEVED!
+                </h3>
+                <p id="victorySub" class="text-xs text-slate-400">You locked onto the secret target first!</p>
+            </div>
+
+            <!-- Stats Recap Box -->
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 grid grid-cols-2 gap-3 text-center">
+                <div>
+                    <div class="text-[10px] font-mono text-slate-500 uppercase">Race Time</div>
+                    <div id="victoryTimeVal" class="font-mono font-black text-lg text-neon-yellow">00:05.21</div>
+                </div>
+                <div>
+                    <div class="text-[10px] font-mono text-slate-500 uppercase">Total Guesses</div>
+                    <div id="victoryAttemptsVal" class="font-mono font-black text-lg text-white">6 Tries</div>
+                </div>
+            </div>
+
+            <!-- Modal Control Buttons -->
+            <div class="space-y-2">
+                <button onclick="window.showLobby()" class="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-display font-black text-sm uppercase tracking-wider rounded-2xl transition shadow-neon-cyan cursor-pointer">
+                    Return To Lobby
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Active Online Players Lobby Modal -->
+    <div id="onlinePlayersModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-neon-panel border border-slate-800 rounded-3xl p-6 w-full max-w-lg space-y-5 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="font-display font-bold text-white text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-users text-emerald-400"></i> Net Racers Network
+                    </h3>
+                    <p class="text-xs text-slate-400">Live active players in Neon Speed Race</p>
+                </div>
+                <button onclick="window.closeOnlinePlayersModal()" class="text-slate-400 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Custom Tag Editor -->
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2">
+                <div class="flex items-center justify-between text-xs text-slate-300">
+                    <span class="text-slate-500">Your Racer Tag:</span>
+                    <span id="myCurrentTagDisplay" class="font-bold text-neon-cyan">Racer_1234</span>
+                </div>
+                <div id="tagEditRow" class="flex gap-2 pt-1 hidden">
+                    <input type="text" id="tagInput" maxlength="15" placeholder="New Tag..." class="bg-slate-900 border border-slate-700 text-xs text-white px-3 py-1.5 rounded-xl flex-1 focus:outline-none focus:border-neon-cyan font-mono">
+                    <button onclick="window.saveNewTag()" class="px-3 py-1.5 bg-neon-cyan text-slate-950 font-bold text-xs rounded-xl hover:bg-cyan-300 transition cursor-pointer">Save</button>
+                </div>
+                <button id="editTagToggleBtn" onclick="window.toggleEditTag()" class="w-full text-center text-[11px] text-slate-400 hover:text-white font-mono py-1 cursor-pointer">
+                    <i class="fa-solid fa-pen-to-square mr-1"></i> Edit Racer Tag
+                </button>
+            </div>
+
+            <!-- Active Players List -->
+            <div class="space-y-2 max-h-64 overflow-y-auto pr-1" id="onlinePlayersList">
+                <div class="text-center text-slate-500 text-xs py-4">Scanning network for active racers...</div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= FIREBASE & GAME ENGINE SCRIPT ================= -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Global Firebase Environment Setup
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'neon-speed-race-100';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : { apiKey: "demo", authDomain: "demo.firebaseapp.com", projectId: "demo" };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Web Audio Synthesizer
+        let audioCtx = null;
+        function playAudioTone(freq, type = 'sine', duration = 0.1) {
+            if (!window.gameState || !window.gameState.soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        window.soundFx = function(kind) {
+            if (kind === 'beep') playAudioTone(600, 'sine', 0.08);
+            if (kind === 'high') playAudioTone(880, 'triangle', 0.15);
+            if (kind === 'low') playAudioTone(220, 'sawtooth', 0.15);
+            if (kind === 'win') {
+                playAudioTone(523, 'sine', 0.1);
+                setTimeout(() => playAudioTone(659, 'sine', 0.1), 100);
+                setTimeout(() => playAudioTone(783, 'sine', 0.25), 200);
+            }
+            if (kind === 'lose') {
+                playAudioTone(300, 'sawtooth', 0.15);
+                setTimeout(() => playAudioTone(200, 'sawtooth', 0.25), 150);
+            }
+        };
+
+        // Core App State
+        const savedTag = localStorage.getItem('neon_racer_tag') || '';
+        window.gameState = {
+            mode: 'bot', // 'bot' or 'online'
+            botDifficulty: 'tactician',
+            soundEnabled: true,
+            user: null,
+            userId: 'local_' + Math.random().toString(36).substr(2, 6),
+            userName: savedTag,
+            userState: 'In Lobby',
+            stats: { wins: 0, losses: 0 },
+            activeRoomCode: null,
+            roomUnsubscribe: null,
+            presenceUnsubscribe: null,
+            timerInterval: null,
+            botInterval: null,
+            startTime: 0,
+            
+            p1: { secret: 0, min: 1, max: 100, attempts: 0, history: [], time: 0, finished: false },
+            p2: { secret: 0, min: 1, max: 100, attempts: 0, history: [], time: 0, finished: false },
+            isHost: true,
+            matchEnded: false
+        };
+
+        let pendingMultiplayerAction = null;
+
+        // Toast Messages
+        window.showToast = function(msg, isErr = false) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `p-3 rounded-xl border text-xs font-bold font-mono shadow-lg transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto flex items-center gap-2 ${
+                isErr ? 'bg-rose-950/90 border-rose-500/50 text-rose-200' : 'bg-cyan-950/90 border-cyan-500/50 text-cyan-200'
+            }`;
+            toast.innerHTML = `<i class="fa-solid ${isErr ? 'fa-triangle-exclamation text-rose-400' : 'fa-circle-info text-neon-cyan'}"></i> ${msg}`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        // Check if player has set a valid non-empty handle
+        window.hasValidHandle = function() {
+            const tag = window.gameState.userName ? window.gameState.userName.trim() : '';
+            return tag.length >= 2;
+        };
+
+        // Mandatory handle check wrapper before executing any multiplayer flow
+        window.handleMultiplayerClick = function(actionType) {
+            const actions = {
+                'quick': () => window.startQuickMatch(),
+                'create': () => window.createPrivateRoom(),
+                'join': () => window.openJoinRoomModal()
+            };
+
+            if (window.hasValidHandle()) {
+                actions[actionType]();
+            } else {
+                pendingMultiplayerAction = actions[actionType];
+                const input = document.getElementById('mandatoryNameInput');
+                if (input) input.value = window.gameState.userName || '';
+                document.getElementById('namePromptModal').classList.remove('hidden');
+                if (input) input.focus();
+                window.soundFx('beep');
+            }
+        };
+
+        // Submit mandatory name modal handler
+        window.submitMandatoryName = function() {
+            const input = document.getElementById('mandatoryNameInput');
+            const val = input ? input.value.trim().substring(0, 15) : '';
+            if (val.length < 2) {
+                window.showToast("Handle must be at least 2 characters!", true);
+                return;
+            }
+
+            window.gameState.userName = val;
+            localStorage.setItem('neon_racer_tag', val);
+            
+            // Sync UI handle representations
+            updateRacerTagUI(val);
+            updatePresence();
+
+            document.getElementById('namePromptModal').classList.add('hidden');
+            window.showToast(`Racer Tag saved: "${val}"`);
+
+            if (pendingMultiplayerAction) {
+                const action = pendingMultiplayerAction;
+                pendingMultiplayerAction = null;
+                action();
+            }
+        };
+
+        function updateRacerTagUI(name) {
+            const headerTag = document.getElementById('headerRacerName');
+            if (headerTag) headerTag.textContent = name || 'Racer Tag';
+            const myTagDisp = document.getElementById('myCurrentTagDisplay');
+            if (myTagDisp) myTagDisp.textContent = name || 'Racer Tag';
+            const p1Race = document.getElementById('p1RaceName');
+            if (p1Race) p1Race.textContent = name || 'YOU (P1)';
+        }
+
+        // Initialize Auth
+        async function initAuth() {
+            try {
+                if (initialAuthToken) {
+                    const cred = await signInWithCustomToken(auth, initialAuthToken);
+                    window.gameState.user = cred.user;
+                } else {
+                    const cred = await signInAnonymously(auth);
+                    window.gameState.user = cred.user;
+                }
+                window.gameState.userId = auth.currentUser.uid;
+            } catch (e) {
+                console.warn("Auth fallback mode active:", e);
+            }
+            loadSavedStats();
+            updateRacerTagUI(window.gameState.userName);
+            startPresenceSystem();
+        }
+
+        function loadSavedStats() {
+            const w = localStorage.getItem('neon_wins') || '0';
+            const l = localStorage.getItem('neon_losses') || '0';
+            window.gameState.stats.wins = parseInt(w);
+            window.gameState.stats.losses = parseInt(l);
+            document.getElementById('statWins').textContent = w;
+            document.getElementById('statLosses').textContent = l;
+        }
+
+        function saveStats() {
+            localStorage.setItem('neon_wins', window.gameState.stats.wins);
+            localStorage.setItem('neon_losses', window.gameState.stats.losses);
+            document.getElementById('statWins').textContent = window.gameState.stats.wins;
+            document.getElementById('statLosses').textContent = window.gameState.stats.losses;
+        }
+
+        // Navigation Controllers
+        window.showLobby = function() {
+            clearInterval(window.gameState.timerInterval);
+            clearInterval(window.gameState.botInterval);
+            if (window.gameState.roomUnsubscribe) window.gameState.roomUnsubscribe();
+
+            window.gameState.userState = 'In Lobby';
+            updatePresence();
+
+            document.getElementById('lobbyScreen').classList.remove('hidden');
+            document.getElementById('roomScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('returnLobbyBtn').classList.add('hidden');
+            document.getElementById('victoryModal').classList.add('hidden');
+            window.soundFx('beep');
+        };
+
+        window.toggleSound = function() {
+            window.gameState.soundEnabled = !window.gameState.soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            const label = document.getElementById('soundLabel');
+            if (window.gameState.soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-neon-cyan';
+                label.textContent = 'SFX On';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+                label.textContent = 'SFX Off';
+            }
+        };
+
+        window.setBotDifficulty = function(diff) {
+            window.gameState.botDifficulty = diff;
+            document.querySelectorAll('.bot-diff-btn').forEach(btn => {
+                btn.className = 'bot-diff-btn py-2 px-3 rounded-xl border text-xs font-bold transition text-left flex flex-col gap-0.5 bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700';
+            });
+            const activeBtn = document.getElementById(`botBtn-${diff}`);
+            if (activeBtn) {
+                activeBtn.className = 'bot-diff-btn py-2 px-3 rounded-xl border text-xs font-bold transition text-left flex flex-col gap-0.5 bg-cyan-950/60 border-neon-cyan/50 text-neon-cyan shadow-neon-cyan';
+            }
+            window.soundFx('beep');
+        };
+
+        // ================= BOT MATCH ENGINE =================
+        window.startBotRace = function() {
+            window.gameState.mode = 'bot';
+            window.gameState.userState = 'In Match vs Bot';
+            updatePresence();
+
+            setupRaceUI("VS BOT: " + window.gameState.botDifficulty.toUpperCase(), window.gameState.userName || 'YOU', "AI Bot (" + window.gameState.botDifficulty + ")");
+            runCountdownSequence(() => {
+                startBotMatchLoop();
+            });
+        };
+
+        function setupRaceUI(badgeText, p1Name, p2Name) {
+            document.getElementById('lobbyScreen').classList.add('hidden');
+            document.getElementById('roomScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('returnLobbyBtn').classList.remove('hidden');
+
+            document.getElementById('matchModeBadge').textContent = badgeText;
+            document.getElementById('p1RaceName').textContent = p1Name;
+            document.getElementById('p2RaceName').textContent = p2Name;
+
+            // Reset Player 1 State
+            window.gameState.p1 = {
+                secret: Math.floor(Math.random() * 100) + 1,
+                min: 1, max: 100, attempts: 0, history: [], time: 0, finished: false
+            };
+
+            // Reset Player 2 State
+            window.gameState.p2 = {
+                secret: Math.floor(Math.random() * 100) + 1,
+                min: 1, max: 100, attempts: 0, history: [], time: 0, finished: false
+            };
+
+            window.gameState.matchEnded = false;
+
+            // Clear visual logs & indicators
+            updatePlayerRangeUI(1, 1, 100);
+            updatePlayerRangeUI(2, 1, 100);
+            document.getElementById('p1TriesCount').textContent = '0';
+            document.getElementById('p2TriesCount').textContent = '0';
+            document.getElementById('p1HistoryList').innerHTML = `<div class="text-slate-600 text-[11px] text-center italic py-2">No guesses submitted.</div>`;
+            document.getElementById('p2HistoryList').innerHTML = `<div class="text-slate-600 text-[11px] text-center italic py-2">No rival guesses yet.</div>`;
+            document.getElementById('p1FeedbackBox').textContent = 'Waiting for countdown...';
+            document.getElementById('p2FeedbackBox').textContent = 'Waiting for countdown...';
+            
+            document.getElementById('p1GuessInput').disabled = true;
+            document.getElementById('p1SubmitBtn').disabled = true;
+            document.getElementById('activeRaceTimer').textContent = '00:00.00';
+        }
+
+        function runCountdownSequence(onComplete) {
+            const overlay = document.getElementById('gameCountdownOverlay');
+            const num = document.getElementById('gameCountdownNum');
+            overlay.classList.remove('hidden');
+
+            let count = 3;
+            num.textContent = count;
+            window.soundFx('beep');
+
+            const timer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    num.textContent = count;
+                    window.soundFx('beep');
+                } else if (count === 0) {
+                    num.textContent = "GO!";
+                    window.soundFx('high');
+                } else {
+                    clearInterval(timer);
+                    overlay.classList.add('hidden');
+                    startRaceClock();
+                    document.getElementById('p1GuessInput').disabled = false;
+                    document.getElementById('p1SubmitBtn').disabled = false;
+                    document.getElementById('p1GuessInput').focus();
+                    if (onComplete) onComplete();
+                }
+            }, 800);
+        }
+
+        function startRaceClock() {
+            clearInterval(window.gameState.timerInterval);
+            window.gameState.startTime = Date.now();
+            window.gameState.timerInterval = setInterval(() => {
+                const elapsed = Date.now() - window.gameState.startTime;
+                const m = Math.floor(elapsed / 60000).toString().padStart(2, '0');
+                const s = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
+                const ms = Math.floor((elapsed % 1000) / 10).toString().padStart(2, '0');
+                document.getElementById('activeRaceTimer').textContent = `${m}:${s}.${ms}`;
+            }, 30);
+        }
+
+        // Adjust P1 Input Quick Buttons
+        window.adjustInput = function(delta) {
+            const input = document.getElementById('p1GuessInput');
+            if (input.disabled) return;
+            let current = parseInt(input.value) || 50;
+            current = Math.min(100, Math.max(1, current + delta));
+            input.value = current;
+            window.soundFx('beep');
+        };
+
+        // Submit P1 Guess
+        window.submitPlayerGuess = function() {
+            if (window.gameState.matchEnded || window.gameState.p1.finished) return;
+            
+            const input = document.getElementById('p1GuessInput');
+            const guess = parseInt(input.value);
+
+            if (isNaN(guess) || guess < 1 || guess > 100) {
+                window.showToast("Enter a valid number between 1 and 100", true);
+                return;
+            }
+
+            const p1 = window.gameState.p1;
+            p1.attempts++;
+            document.getElementById('p1TriesCount').textContent = p1.attempts;
+
+            const feedback = document.getElementById('p1FeedbackBox');
+            let resultType = '';
+
+            if (guess === p1.secret) {
+                p1.finished = true;
+                p1.time = Date.now() - window.gameState.startTime;
+                feedback.className = "p-3 rounded-2xl border bg-emerald-950/80 border-emerald-500/50 text-emerald-300 font-bold text-xs text-center";
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> CORRECT! (${guess})`;
+                resultType = 'CORRECT';
+                window.soundFx('win');
+                handleMatchWinner('P1');
+            } else if (guess < p1.secret) {
+                p1.min = Math.max(p1.min, guess + 1);
+                feedback.className = "p-3 rounded-2xl border bg-cyan-950/80 border-cyan-500/50 text-neon-cyan font-semibold text-xs text-center";
+                feedback.innerHTML = `<i class="fa-solid fa-arrow-up text-neon-cyan mr-1"></i> TOO LOW! Try Higher than ${guess}`;
+                resultType = 'TOO LOW';
+                window.soundFx('high');
+            } else {
+                p1.max = Math.min(p1.max, guess - 1);
+                feedback.className = "p-3 rounded-2xl border bg-cyan-950/80 border-cyan-500/50 text-neon-cyan font-semibold text-xs text-center";
+                feedback.innerHTML = `<i class="fa-solid fa-arrow-down text-neon-cyan mr-1"></i> TOO HIGH! Try Lower than ${guess}`;
+                resultType = 'TOO HIGH';
+                window.soundFx('low');
+            }
+
+            updatePlayerRangeUI(1, p1.min, p1.max);
+            addHistoryLog(1, guess, resultType);
+            input.value = '';
+
+            // If online mode, push state to Firebase
+            if (window.gameState.mode === 'online' && window.gameState.activeRoomCode) {
+                syncOnlineGuessToFirebase(guess, resultType);
+            }
+        };
+
+        function addHistoryLog(playerNum, guess, result) {
+            const list = document.getElementById(`p${playerNum}HistoryList`);
+            if (!list) return;
+
+            if (list.querySelector('.italic')) list.innerHTML = '';
+
+            let colorClass = "text-slate-300 bg-slate-900 border-slate-800";
+            let badge = `<span class="text-[10px] text-cyan-400 font-bold"><i class="fa-solid fa-arrow-up"></i> LOW</span>`;
+            if (result === 'TOO HIGH') badge = `<span class="text-[10px] text-rose-400 font-bold"><i class="fa-solid fa-arrow-down"></i> HIGH</span>`;
+            if (result === 'CORRECT') badge = `<span class="text-[10px] text-emerald-400 font-bold"><i class="fa-solid fa-check"></i> GOT IT</span>`;
+
+            const item = document.createElement('div');
+            item.className = `flex justify-between items-center px-3 py-1.5 rounded-xl border text-xs font-mono ${colorClass}`;
+            item.innerHTML = `<span>Guess <strong>#${guess}</strong></span> ${badge}`;
+            list.prepend(item);
+        }
+
+        function updatePlayerRangeUI(playerNum, min, max) {
+            const rangeText = document.getElementById(`p${playerNum}RangeText`);
+            const rangeBar = document.getElementById(`p${playerNum}RangeBar`);
+            if (rangeText) rangeText.textContent = `${min} – ${max}`;
+
+            if (rangeBar) {
+                const widthPercent = Math.max(2, ((max - min + 1) / 100) * 100);
+                const leftPercent = ((min - 1) / 100) * 100;
+                rangeBar.style.left = `${leftPercent}%`;
+                rangeBar.style.width = `${widthPercent}%`;
+            }
+        }
+
+        // Bot Match Timing Execution Loop
+        function startBotMatchLoop() {
+            clearInterval(window.gameState.botInterval);
+
+            const delays = {
+                rookie: 2500,
+                tactician: 1500,
+                demon: 900,
+                god: 500
+            };
+
+            const intervalDelay = delays[window.gameState.botDifficulty] || 1500;
+
+            window.gameState.botInterval = setInterval(() => {
+                if (window.gameState.matchEnded || window.gameState.p2.finished) return;
+
+                const p2 = window.gameState.p2;
+                let botGuess;
+
+                if (window.gameState.botDifficulty === 'rookie') {
+                    botGuess = Math.floor(Math.random() * (p2.max - p2.min + 1)) + p2.min;
+                } else if (window.gameState.botDifficulty === 'tactician') {
+                    // Binary search with small random variance
+                    const mid = Math.floor((p2.min + p2.max) / 2);
+                    const offset = Math.floor(Math.random() * 3) - 1;
+                    botGuess = Math.min(p2.max, Math.max(p2.min, mid + offset));
+                } else {
+                    // Binary search optimal
+                    botGuess = Math.floor((p2.min + p2.max) / 2);
+                }
+
+                p2.attempts++;
+                document.getElementById('p2TriesCount').textContent = p2.attempts;
+
+                const feedback = document.getElementById('p2FeedbackBox');
+                let resultType = '';
+
+                if (botGuess === p2.secret) {
+                    p2.finished = true;
+                    p2.time = Date.now() - window.gameState.startTime;
+                    feedback.className = "p-3 rounded-2xl border bg-fuchsia-950/80 border-fuchsia-500/50 text-fuchsia-300 font-bold text-xs text-center";
+                    feedback.innerHTML = `<i class="fa-solid fa-robot text-fuchsia-400 mr-1"></i> BOT FOUND TARGET! (${botGuess})`;
+                    resultType = 'CORRECT';
+                    handleMatchWinner('P2');
+                } else if (botGuess < p2.secret) {
+                    p2.min = Math.max(p2.min, botGuess + 1);
+                    feedback.className = "p-3 rounded-2xl border bg-slate-950 border-slate-800 text-fuchsia-400 font-semibold text-xs text-center";
+                    feedback.innerHTML = `<i class="fa-solid fa-arrow-up text-fuchsia-400 mr-1"></i> Bot Guessed ${botGuess} (Too Low)`;
+                    resultType = 'TOO LOW';
+                } else {
+                    p2.max = Math.min(p2.max, botGuess - 1);
+                    feedback.className = "p-3 rounded-2xl border bg-slate-950 border-slate-800 text-fuchsia-400 font-semibold text-xs text-center";
+                    feedback.innerHTML = `<i class="fa-solid fa-arrow-down text-fuchsia-400 mr-1"></i> Bot Guessed ${botGuess} (Too High)`;
+                    resultType = 'TOO HIGH';
+                }
+
+                updatePlayerRangeUI(2, p2.min, p2.max);
+                addHistoryLog(2, botGuess, resultType);
+
+            }, intervalDelay);
+        }
+
+        function handleMatchWinner(winnerKey) {
+            window.gameState.matchEnded = true;
+            clearInterval(window.gameState.timerInterval);
+            clearInterval(window.gameState.botInterval);
+
+            document.getElementById('p1GuessInput').disabled = true;
+            document.getElementById('p1SubmitBtn').disabled = true;
+
+            const isP1Win = winnerKey === 'P1';
+            const winnerData = isP1Win ? window.gameState.p1 : window.gameState.p2;
+
+            if (isP1Win) {
+                window.gameState.stats.wins++;
+                saveStats();
+                if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            } else {
+                window.gameState.stats.losses++;
+                saveStats();
+                window.soundFx('lose');
+            }
+
+            setTimeout(() => {
+                const modal = document.getElementById('victoryModal');
+                const title = document.getElementById('victoryTitle');
+                const sub = document.getElementById('victorySub');
+                const iconBox = document.getElementById('victoryIconBox');
+                const timeVal = document.getElementById('victoryTimeVal');
+                const attemptsVal = document.getElementById('victoryAttemptsVal');
+
+                if (isP1Win) {
+                    title.textContent = "VICTORY ACHIEVED!";
+                    title.className = "font-display text-2xl font-black text-neon-cyan uppercase tracking-wider";
+                    sub.textContent = "You guessed your secret target first!";
+                    iconBox.className = "w-20 h-20 rounded-3xl bg-cyan-950 border border-neon-cyan/50 text-neon-cyan flex items-center justify-center mx-auto text-4xl shadow-neon-cyan animate-bounce";
+                    iconBox.innerHTML = `<i class="fa-solid fa-trophy"></i>`;
+                } else {
+                    title.textContent = "DEFEAT - RIVAL WON!";
+                    title.className = "font-display text-2xl font-black text-neon-magenta uppercase tracking-wider";
+                    sub.textContent = "Your opponent found their number first!";
+                    iconBox.className = "w-20 h-20 rounded-3xl bg-fuchsia-950 border border-neon-magenta/50 text-neon-magenta flex items-center justify-center mx-auto text-4xl shadow-neon-magenta";
+                    iconBox.innerHTML = `<i class="fa-solid fa-skull"></i>`;
+                }
+
+                const elapsedMs = winnerData.time || (Date.now() - window.gameState.startTime);
+                const m = Math.floor(elapsedMs / 60000).toString().padStart(2, '0');
+                const s = Math.floor((elapsedMs % 60000) / 1000).toString().padStart(2, '0');
+                const ms = Math.floor((elapsedMs % 1000) / 10).toString().padStart(2, '0');
+
+                timeVal.textContent = `${m}:${s}.${ms}`;
+                attemptsVal.textContent = `${winnerData.attempts} Tries`;
+
+                modal.classList.remove('hidden');
+            }, 600);
+        }
+
+
+        // ================= ONLINE FIREBASE MULTIPLAYER =================
+        window.openJoinRoomModal = function() {
+            document.getElementById('joinModal').classList.remove('hidden');
+            document.getElementById('joinCodeInput').focus();
+            window.soundFx('beep');
+        };
+
+        window.closeJoinRoomModal = function() {
+            document.getElementById('joinModal').classList.add('hidden');
+        };
+
+        window.submitJoinCode = async function() {
+            const input = document.getElementById('joinCodeInput');
+            const code = input ? input.value.trim().toUpperCase() : '';
+            if (code.length !== 6) {
+                window.showToast("Enter a valid 6-character room code!", true);
+                return;
+            }
+            window.closeJoinRoomModal();
+            await joinRoomByCode(code);
+        };
+
+        window.createPrivateRoom = async function() {
+            if (!auth.currentUser) await initAuth();
+            window.gameState.mode = 'online';
+            window.gameState.isHost = true;
+            window.gameState.userState = 'In Online Room';
+            updatePresence();
+
+            const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            window.gameState.activeRoomCode = roomCode;
+
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'speed_rooms', roomCode);
+
+            const roomData = {
+                code: roomCode,
+                createdAt: Date.now(),
+                status: 'waiting',
+                hostId: window.gameState.userId,
+                p1: {
+                    id: window.gameState.userId,
+                    name: window.gameState.userName,
+                    ready: true,
+                    secret: Math.floor(Math.random() * 100) + 1,
+                    min: 1, max: 100, attempts: 0, finished: false, time: 0, lastGuess: null
+                },
+                p2: null,
+                winnerId: null
+            };
+
+            try {
+                await setDoc(roomRef, roomData);
+                showRoomLobby(roomCode, true);
+                listenToRoom(roomCode);
+            } catch (e) {
+                window.showToast("Failed to create room.", true);
+            }
+        };
+
+        window.startQuickMatch = async function() {
+            if (!auth.currentUser) await initAuth();
+            window.gameState.mode = 'online';
+            window.gameState.userState = 'In Quick Queue';
+            updatePresence();
+
+            try {
+                const roomsRef = collection(db, 'artifacts', appId, 'public', 'data', 'speed_rooms');
+                const snapshot = await getDocs(roomsRef);
+                
+                let foundRoom = null;
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.status === 'waiting' && !data.p2 && data.hostId !== window.gameState.userId) {
+                        foundRoom = data;
+                    }
+                });
+
+                if (foundRoom) {
+                    window.gameState.isHost = false;
+                    window.gameState.activeRoomCode = foundRoom.code;
+                    await joinRoomByCode(foundRoom.code);
+                } else {
+                    await window.createPrivateRoom();
+                    window.showToast("No open matches found. Created public lobby!");
+                }
+            } catch (e) {
+                window.showToast("Quick Match error. Trying private room...", true);
+                await window.createPrivateRoom();
+            }
+        };
+
+        async function joinRoomByCode(roomCode) {
+            if (!auth.currentUser) await initAuth();
+            window.gameState.mode = 'online';
+            window.gameState.isHost = false;
+            window.gameState.userState = 'In Online Room';
+            updatePresence();
+
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'speed_rooms', roomCode);
+            
+            try {
+                const docSnap = await getDoc(roomRef);
+                if (!docSnap.exists()) {
+                    window.showToast("Room code not found!", true);
+                    return;
+                }
+
+                const data = docSnap.data();
+                if (data.p2 && data.p2.id !== window.gameState.userId) {
+                    window.showToast("Room is full!", true);
+                    return;
+                }
+
+                await updateDoc(roomRef, {
+                    p2: {
+                        id: window.gameState.userId,
+                        name: window.gameState.userName,
+                        ready: true,
+                        secret: Math.floor(Math.random() * 100) + 1,
+                        min: 1, max: 100, attempts: 0, finished: false, time: 0, lastGuess: null
+                    }
+                });
+
+                showRoomLobby(roomCode, false);
+                listenToRoom(roomCode);
+            } catch (e) {
+                window.showToast("Failed to join room.", true);
+            }
+        }
+
+        function showRoomLobby(code, isHost) {
+            document.getElementById('lobbyScreen').classList.add('hidden');
+            document.getElementById('roomScreen').classList.remove('hidden');
+            document.getElementById('roomCodeDisplay').textContent = code;
+            document.getElementById('roomShareUrl').value = `${window.location.origin}${window.location.pathname}?room=${code}`;
+            
+            document.getElementById('roomP1Name').textContent = isHost ? (window.gameState.userName + ' (Host)') : 'Opponent (Host)';
+            
+            const startBtn = document.getElementById('hostStartBtn');
+            if (isHost) {
+                startBtn.classList.remove('hidden');
+                startBtn.disabled = true;
+            } else {
+                startBtn.classList.add('hidden');
+            }
+        }
+
+        window.copyRoomCode = function() {
+            const code = document.getElementById('roomCodeDisplay').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                window.showToast("Room Code copied to clipboard!");
+            }).catch(() => {
+                window.showToast("Copied: " + code);
+            });
+        };
+
+        window.triggerOnlineCountdown = async function() {
+            if (!window.gameState.activeRoomCode || !window.gameState.isHost) return;
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'speed_rooms', window.gameState.activeRoomCode);
+            await updateDoc(roomRef, { status: 'countdown' });
+        };
+
+        function listenToRoom(roomCode) {
+            if (window.gameState.roomUnsubscribe) window.gameState.roomUnsubscribe();
+
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'speed_rooms', roomCode);
+            window.gameState.roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
+                if (!snapshot.exists()) return;
+                const data = snapshot.data();
+
+                // Room Waiting Updates
+                if (data.p2) {
+                    const p2Slot = document.getElementById('roomP2Slot');
+                    const p2Name = document.getElementById('roomP2Name');
+                    const p2Status = document.getElementById('roomP2Status');
+                    
+                    if (p2Name) p2Name.textContent = data.p2.name || 'Player 2';
+                    if (p2Status) {
+                        p2Status.textContent = 'READY';
+                        p2Status.className = 'text-[10px] uppercase font-mono font-bold text-emerald-400';
+                    }
+                    if (p2Slot) p2Slot.className = 'bg-slate-950/80 border border-fuchsia-500/40 rounded-2xl p-4 text-center space-y-2';
+
+                    if (window.gameState.isHost) {
+                        const startBtn = document.getElementById('hostStartBtn');
+                        startBtn.disabled = false;
+                        startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+
+                // Countdown trigger
+                if (data.status === 'countdown' && document.getElementById('gameScreen').classList.contains('hidden')) {
+                    const myRole = window.gameState.isHost ? 'p1' : 'p2';
+                    const oppRole = window.gameState.isHost ? 'p2' : 'p1';
+
+                    setupRaceUI("ONLINE MULTIPLAYER", data[myRole].name, data[oppRole].name);
+                    
+                    // Assign secrets from Firebase room doc
+                    window.gameState.p1.secret = data[myRole].secret;
+                    window.gameState.p2.secret = data[oppRole].secret;
+
+                    runCountdownSequence(() => {
+                        window.gameState.userState = 'In Match Online';
+                        updatePresence();
+                    });
+                }
+
+                // Sync rival updates during active match
+                if (data.status === 'countdown' || data.status === 'active') {
+                    const oppRole = window.gameState.isHost ? 'p2' : 'p1';
+                    const oppData = data[oppRole];
+
+                    if (oppData && oppData.lastGuess) {
+                        const p2 = window.gameState.p2;
+                        p2.attempts = oppData.attempts;
+                        document.getElementById('p2TriesCount').textContent = p2.attempts;
+
+                        updatePlayerRangeUI(2, oppData.min, oppData.max);
+                        
+                        const feedback = document.getElementById('p2FeedbackBox');
+                        feedback.textContent = `Rival guessed ${oppData.lastGuess.value} (${oppData.lastGuess.result})`;
+                    }
+
+                    if (data.winnerId && !window.gameState.matchEnded) {
+                        const iWon = data.winnerId === window.gameState.userId;
+                        handleMatchWinner(iWon ? 'P1' : 'P2');
+                    }
+                }
+            });
+        }
+
+        async function syncOnlineGuessToFirebase(guessValue, resultType) {
+            if (!window.gameState.activeRoomCode) return;
+            const myRole = window.gameState.isHost ? 'p1' : 'p2';
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'speed_rooms', window.gameState.activeRoomCode);
+
+            const myData = window.gameState.p1;
+            const updates = {};
+            updates[`${myRole}.attempts`] = myData.attempts;
+            updates[`${myRole}.min`] = myData.min;
+            updates[`${myRole}.max`] = myData.max;
+            updates[`${myRole}.lastGuess`] = { value: guessValue, result: resultType };
+
+            if (resultType === 'CORRECT') {
+                updates[`${myRole}.finished`] = true;
+                updates[`${myRole}.time`] = myData.time;
+                updates[`winnerId`] = window.gameState.userId;
+            }
+
+            try {
+                await updateDoc(roomRef, updates);
+            } catch (e) {
+                console.warn("Sync error:", e);
+            }
+        }
+
+        window.leaveRoom = function() {
+            if (window.gameState.roomUnsubscribe) window.gameState.roomUnsubscribe();
+            window.showLobby();
+        };
+
+        // ================= PRESENCE & ONLINE PLAYER COUNTER =================
+        async function updatePresence() {
+            if (!auth.currentUser) return;
+            const uid = auth.currentUser.uid;
+            const presenceRef = doc(db, 'artifacts', appId, 'public', 'data', 'presence', uid);
+            try {
+                await setDoc(presenceRef, {
+                    uid: uid,
+                    name: window.gameState.userName || 'Anonymous Racer',
+                    state: window.gameState.userState,
+                    lastSeen: Date.now()
+                }, { merge: true });
+            } catch (e) {
+                console.warn("Presence heartbeat error:", e);
+            }
+        }
+
+        function startPresenceSystem() {
+            updatePresence();
+            setInterval(updatePresence, 10000);
+            listenToOnlinePresence();
+        }
+
+        function listenToOnlinePresence() {
+            if (window.gameState.presenceUnsubscribe) window.gameState.presenceUnsubscribe();
+            
+            const presenceCol = collection(db, 'artifacts', appId, 'public', 'data', 'presence');
+            window.gameState.presenceUnsubscribe = onSnapshot(presenceCol, (snapshot) => {
+                const now = Date.now();
+                const activePlayers = [];
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data && data.lastSeen && (now - data.lastSeen < 30000)) {
+                        activePlayers.push(data);
+                    }
+                });
+
+                const countText = document.getElementById('onlineCountText');
+                if (countText) {
+                    countText.textContent = `${activePlayers.length} Online`;
+                }
+
+                renderOnlinePlayersList(activePlayers);
+            }, (err) => {
+                console.warn("Presence snapshot error:", err);
+            });
+        }
+
+        function renderOnlinePlayersList(players) {
+            const list = document.getElementById('onlinePlayersList');
+            if (!list) return;
+
+            if (players.length === 0) {
+                list.innerHTML = `<div class="text-center text-slate-500 text-xs py-4">No active racers online.</div>`;
+                return;
+            }
+
+            list.innerHTML = players.map(p => {
+                const isMe = p.uid === window.gameState.userId;
+                let stateBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-900 border border-slate-700 text-slate-300">${p.state || 'In Lobby'}</span>`;
+                if (p.state === 'In Match vs Bot') stateBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-950 border border-cyan-500/40 text-neon-cyan">VS Bot</span>`;
+                if (p.state === 'In Quick Queue') stateBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-950 border border-amber-500/40 text-amber-300">Queuing</span>`;
+                if (p.state === 'In Online Room') stateBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-fuchsia-950 border border-fuchsia-500/40 text-neon-magenta">Online Match</span>`;
+
+                return `
+                    <div class="flex items-center justify-between bg-slate-950 p-2.5 rounded-2xl border border-slate-800 ${isMe ? 'border-cyan-500/50' : ''}">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                                <i class="fa-solid fa-user-ninja ${isMe ? 'text-neon-cyan' : 'text-slate-400'}"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                                    ${escapeHtml(p.name || 'Anonymous Racer')}
+                                    ${isMe ? '<span class="text-[9px] text-neon-cyan uppercase font-mono">(YOU)</span>' : ''}
+                                </div>
+                                <div class="text-[10px] text-slate-500 font-mono">Active now</div>
+                            </div>
+                        </div>
+                        <div>${stateBadge}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        window.openOnlinePlayersModal = function() {
+            document.getElementById('myCurrentTagDisplay').textContent = window.gameState.userName || 'Not Set';
+            document.getElementById('onlinePlayersModal').classList.remove('hidden');
+            window.soundFx('beep');
+        };
+
+        window.closeOnlinePlayersModal = function() {
+            document.getElementById('onlinePlayersModal').classList.add('hidden');
+        };
+
+        window.toggleEditTag = function() {
+            const row = document.getElementById('tagEditRow');
+            row.classList.toggle('hidden');
+            if (!row.classList.contains('hidden')) {
+                const input = document.getElementById('tagInput');
+                input.value = window.gameState.userName || '';
+                input.focus();
+            }
+        };
+
+        window.saveNewTag = function() {
+            const input = document.getElementById('tagInput');
+            const cleaned = input.value.trim().substring(0, 15);
+            if (cleaned.length >= 2) {
+                window.gameState.userName = cleaned;
+                localStorage.setItem('neon_racer_tag', cleaned);
+                updateRacerTagUI(cleaned);
+                document.getElementById('tagEditRow').classList.add('hidden');
+                updatePresence();
+                window.showToast(`Racer tag updated to "${cleaned}"`);
+            } else {
+                window.showToast("Handle must be at least 2 characters!", true);
+            }
+        };
+
+        // Initialize Firebase Auth & Keyboard Submit Listeners
+        window.addEventListener('DOMContentLoaded', () => {
+            initAuth();
+            
+            document.getElementById('p1GuessInput')?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    window.submitPlayerGuess();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
